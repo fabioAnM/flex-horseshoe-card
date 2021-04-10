@@ -1,4 +1,5 @@
 **Personal contribute, april 2021**
+
   release : 0.9.2 (candidate)
   by      : Fabio Salvicchi
   date    : 9 April 2021
@@ -6,8 +7,14 @@
  - no uppercase translation for card's name, is up to you choose the case
  - added a new horseshoe_style named 'colorstoplineargradient'; it display a gradient
    from the first color_stop to the value's corrispondent color_stop
- - in section SHOW the "scale_limits" boolean set to true will show min % max values
-   (wondering to display text with min & max step_colors...)
+ - in section SHOW the "scale_limits" boolean set to true will show min and max values
+   (wondering to display text with min andmax step_colors...)
+
+Example
+
+show:
+  horseshoe_style: colorstoplineargradient
+  scale_limits: true
 
 
 **Personal Note, september 2020**
