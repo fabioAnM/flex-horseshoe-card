@@ -1,8 +1,11 @@
-**Personal contribute, april 2021**
+**My personal contribute, april 2021**
 
   release : 0.9.2 (candidate)
+  
   by      : Fabio Salvicchi
+  
   date    : 9 April 2021
+  
   log     :
  - no uppercase translation for card's name, is up to you choose the case
  - added a new horseshoe_style named 'colorstoplineargradient'; it display a gradient
@@ -13,7 +16,9 @@
 Example
 
 show:
+
   horseshoe_style: colorstoplineargradient
+  
   scale_limits: true
 
 
