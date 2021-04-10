@@ -5,7 +5,19 @@
 * Repository: https://github.com/AmoebeLabs/
 *
 * Author    : Mars @ AmoebeLabs.com
-* 
+* Revision(s)
+*   release : 0.9.1 (candidate)
+*   by      : Fabio Salvicchi
+*   date    : 17 March 2021
+*   log     : - no uppercase translation for card's name, is up to you choose the case
+*             - added a new horseshoe_style named 'colorstoplineargradient'; it display a gradient
+*               from the first color_stop to the value's corrispondent color_stop
+*
+*   release : 0.9.2 (candidate)
+*   by      : Fabio Salvicchi
+*   date    : 9 April 2021
+*   log     : - in section SHOW the "scale_limits" boolean set to true will show min and max values
+*               (wondering to display text with min and max colors...)
 * License   : MIT
 *
 * -----
@@ -533,7 +545,7 @@ import {
           opacity: 0.8;
           fill : var(--primary-text-color);
           font-size: 1.5em;
-          text-transform: uppercase;
+//          text-transform: uppercase;
           letter-spacing: 0.1em;
         }
   
@@ -543,7 +555,7 @@ import {
           overflow: hidden;
           fill : var(--primary-text-color);
           text-anchor: middle;
-          text-transform: uppercase;
+//          text-transform: uppercase;
           letter-spacing: 0.1em;
         }
   
@@ -737,6 +749,7 @@ import {
       
     const min = this.config.horseshoe_scale.min || 0;
     const max = this.config.horseshoe_scale.max || 100;
+	// normalizza il valore con la scala
     const val = Math.min(this._calculateValueBetween(min, max, state), 1);
     const score = val * HORSESHOE_PATH_LENGTH;
     const total = 10 * HORSESHOE_RADIUS_SIZE;
@@ -757,7 +770,7 @@ import {
       }
       else if (strokeStyle == 'autominmax') {
         // Use color0 and color1 for autoranging the color of the horseshoe
-        const stroke = this._calculateStrokeColor(state, this.colorStopsMinMax, true);
+        const stroke = this._calculateStrokeColor(state, this.colorStopsMinMax, 'true');
   
         // We now use a gradient for the horseshoe, using two colors
         // Set these colors to the colorstop color...
@@ -766,7 +779,7 @@ import {
         this.color1_offset = '0%';
       }
       else if (strokeStyle == 'colorstop' || strokeStyle == 'colorstopgradient') {
-        const stroke = this._calculateStrokeColor(state, this.colorStops, strokeStyle === 'colorstopgradient');
+        const stroke = this._calculateStrokeColor(state, this.colorStops, strokeStyle === 'colorstopgradient' ? 'true' : 'false');
   
         // We now use a gradient for the horseshoe, using two colors
         // Set these colors to the colorstop color...
@@ -782,6 +795,21 @@ import {
   
         // According to stackoverflow, these calculations / adjustments would be needed, but it isn't ;-)
         // Added from https://stackoverflow.com/questions/9025678/how-to-get-a-rotated-linear-gradient-svg-for-use-as-a-background-image
+        const angleCoords = {'x1' : '0%', 'y1' : '0%', 'x2': '100%', 'y2' : '0%'};
+        this.color1_offset = `${Math.round((1-val)*100)}%`;
+  
+        this.angleCoords = angleCoords;
+      }
+      else if (strokeStyle == 'colorstoplineargradient') {
+        // This has taken a lot of time to get a satisfying result, and it appeared much simpler than anticipated.
+        // I don't understand it, but for a circle, a gradient from left/right with adjusted stop is enough ?!?!?!
+        // No calculations to adjust the angle of the gradient, or rotating the gradient itself.
+        // Weird, but it works. Not a 100% match, but it is good enough for now...
+  
+        // According to stackoverflow, these calculations / adjustments would be needed, but it isn't ;-)
+        // Added from https://stackoverflow.com/questions/9025678/how-to-get-a-rotated-linear-gradient-svg-for-use-as-a-background-image
+		this.color0 = '#0000FF';
+		this.color1 = this._calculateStrokeColor(state, this.colorStops, 'linearGradient');
         const angleCoords = {'x1' : '0%', 'y1' : '0%', 'x2': '100%', 'y2' : '0%'};
         this.color1_offset = `${Math.round((1-val)*100)}%`;
   
@@ -1020,6 +1048,60 @@ import {
       }
       return svg`${scaleItems}`;
     }
+  
+  /*******************************************************************************
+    * _renderScale()
+    *
+    * Summary.
+    * Renders the scale min & max.
+    *
+    */
+  
+  _renderScale() {
+	const { config, } = this;
+	if (!config) return;
+	if (!config.show) return;
+	if (!config.show.scale_limits) return;
+
+
+	const SCALE_MIN_VALUE_STYLES = {
+	  "font-size": '0.8em;',
+	  "color": 'var(--primary-text-color);',
+	  "opacity": '1;',
+	  "text-anchor": 'end;'
+	};
+  
+	const SCALE_MAX_VALUE_STYLES = {
+	  "font-size": '0.8em;',
+	  "color": 'var(--primary-text-color);',
+	  "opacity": '0.1;',
+	  "text-anchor": 'start;'
+	};
+  
+	// Get configuration styles as the default styles
+	let configMinStyle = {...SCALE_MIN_VALUE_STYLES};
+	let configMaxStyle = {...SCALE_MAX_VALUE_STYLES};
+	
+    // Convert javascript records to plain text, without "{}" and "," between the styles.
+	const minStyleStr = JSON.stringify(configMinStyle).slice(1, -1).replace(/"/g,"").replace(/,/g,"");
+	const maxStyleStr = JSON.stringify(configMaxStyle).slice(1, -1).replace(/"/g,"").replace(/,/g,"");
+
+/*
+	if (item.styles) 
+		configStyle = Object.assign(configStyle, ...item.styles);
+*/
+
+    const minVal = this.config.horseshoe_scale.min || 0;
+    const maxVal = this.config.horseshoe_scale.max || 100;
+
+
+    return svg`
+		  <text>
+			<tspan x="13%" y="84%"  style="${minStyleStr}">${minVal}</tspan>
+			<tspan x="89%" y="84%"  style="${maxStyleStr}">${maxVal}</tspan>
+		  </text>
+      `;
+    }
       
   /*******************************************************************************
     * _renderSvg()
@@ -1090,7 +1172,7 @@ import {
   _renderHorseShoe() {
   
     if (!this.config.show.horseshoe) return;
-    
+
     return svg`
         <g id="horseshoe__svg__group" class="horseshoe__svg__group">
           <circle id="horseshoe__scale" class="horseshoe__scale" cx="50%" cy="50%" r="45%"
@@ -1111,10 +1193,13 @@ import {
             style="transition: all 2.5s ease-out;"/>
           
           ${this._renderTickMarks()}
+          ${this._renderScale()}
+
         </g>
       `;
   }
-  
+
+
   /*******************************************************************************
     * _renderEntityNames()
     *
@@ -1363,8 +1448,8 @@ import {
     _renderIcon(item) {
   
     if (!item) return;
-  
-  item.entity = item.entity ? item.entity : 0;
+
+    item.entity = item.entity ? item.entity : 0;
   
     // get icon size, and calculate the foreignObject position and size. This must match the icon size
     // 1em = FONT_SIZE pixels, so we can calculate the icon size, and x/y positions of the foreignObject
@@ -1637,7 +1722,13 @@ import {
           const serviceData = { ...actionConfig.service_data };
           hass.callService(domain, service, serviceData);
         }
-      }
+/*         default : {
+          e = new Event('hass-more-info', { composed: true });
+          e.detail = { entityId };
+          node.dispatchEvent(e);
+          break;
+        }
+ */      }
     }
   
   /*******************************************************************************
@@ -1647,8 +1738,8 @@ import {
     * Handles the first part of mouse click processing.
     * It stops propagation to the parent and processes the event.
     * 
-  * The action can be configured per entity. Look-up the entity, and handle the click
-  * event for further processing.
+    * The action can be configured per entity. Look-up the entity, and handle the click
+    * event for further processing.
     *
     * Credits:
     *  Almost all credits to the mini-graph-card for this function.
@@ -1781,22 +1872,31 @@ import {
     let start, end, val;
     const l = sortedStops.length;
     if (state <= sortedStops[0]) {
-    return stops[sortedStops[0]];
-    } else if (state >= sortedStops[l - 1]) {
-    return stops[sortedStops[l - 1]];
-    } else {
-    for (let i = 0; i < l - 1; i++) {
-      const s1 = sortedStops[i];
-      const s2 = sortedStops[i + 1];
-      if (state >= s1 && state < s2) {
-      [start, end] = [stops[s1], stops[s2]];
-      if (!gradient) {
-        return start;
+      return stops[sortedStops[0]];
+    } 
+	else if (state >= sortedStops[l - 1]) {
+      return stops[sortedStops[l - 1]];
+    } 
+	else {
+      for (let i = 0; i < l - 1; i++) {
+        const s1 = sortedStops[i];
+        const s2 = sortedStops[i + 1];
+        if (state >= s1 && state < s2) {
+          [start, end] = [stops[s1], stops[s2]];
+          switch (gradient) {
+            case 'false': ;
+              return start;
+              break;
+            case 'true': ;
+              val = this._calculateValueBetween(s1, s2, state);
+              break;
+            case 'linearGradient': ;
+              val = this._calculateValueBetween(sortedStops[0], s2, state);
+              break;
+          }
+          break;		// this BREAK interrupt the FOR statemen
+        }
       }
-      val = this._calculateValueBetween(s1, s2, state);
-      break;
-      }
-    }
     }
     return this._getGradientValue(start, end, val);
   }
